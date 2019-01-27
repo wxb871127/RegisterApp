@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
-  <info organisation="com.register" module="registerplugin" revision="1.0.0" status="integration" publication="20190125164817"/>
+  <info organisation="com.register" module="registerplugin" revision="1.0.0" status="integration" publication="20190127225855"/>
   <configurations>
     <conf name="annotationProcessor" visibility="private"/>
     <conf name="apiElements" visibility="private" extends="runtime"/>
@@ -25,5 +25,9 @@
   </configurations>
   <publications>
     <artifact name="registerplugin" type="jar" ext="jar" conf="apiElements,archives,runtime,runtimeElements"/>
+    <artifact name="registerplugin" type="jar" ext="jar" conf="archives" m:classifier="sources"/>
   </publications>
+  <dependencies>
+    <dependency org="com.android.tools.build" name="gradle" rev="2.2.0" conf="compile-&gt;default"/>
+  </dependencies>
 </ivy-module>

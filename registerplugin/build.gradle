@@ -4,19 +4,50 @@ apply plugin: 'maven'
 dependencies {
     implementation gradleApi()
     implementation localGroovy()
+
 }
 
 repositories{
     mavenCentral()
 }
 
-group 'com.register'
-version = '1.0.0'
+dependencies {
+    compile 'com.android.tools.build:gradle:2.2.0'
+}
+
+def artifact_group = 'com.register'
+def artifact_id = 'registerplugin'
+def artifact_version = '1.0.0'
+
+group = artifact_group
+version = artifact_version
+
+task sourcesJar(type: Jar) {
+    from project.file('src/main/groovy')
+    classifier = 'sources'
+}
+
+artifacts {
+    archives sourcesJar
+}
 
 uploadArchives{
     repositories {
         mavenDeployer{
             repository(url : uri('../repo'))
+
+            pom.groupId = artifact_group
+            pom.artifactId = artifact_id
+            pom.version = artifact_version
+
+            pom.project {
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
         }
     }
 }
