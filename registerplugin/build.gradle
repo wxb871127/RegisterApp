@@ -12,7 +12,7 @@ repositories{
 }
 
 dependencies {
-    compile 'com.android.tools.build:gradle:2.2.0'
+    compile 'com.android.tools.build:gradle:3.2.0'
 }
 
 def artifact_group = 'com.register'

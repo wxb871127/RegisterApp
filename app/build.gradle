@@ -50,6 +50,5 @@ registerplugin{
                     'registerMethod':'registerState'
             ]
     ]
-    registerMap = '333333333'
     enabledCache = false
 }

@@ -1,5 +1,6 @@
 package com.register
 
+import com.android.build.gradle.AppExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import com.android.build.gradle.AppPlugin
@@ -11,25 +12,20 @@ public  class RegisterPlugin implements Plugin<Project>{
 
     @Override
     public void apply(Project project){
-        println "Hello gradle plugin"
         def isApp = project.plugins.hasPlugin(AppPlugin)
-//        println 'plugins is :'
-//        project.plugins.forEach(){
-//            Plugin plugin ->
-//                println plugin.toString()
-//        }
-//        println '\n'
-//
-        if(isApp){
+
+        if(isApp) {
             project.extensions.create(ExtenName, RegisterConfig)
-            RegisterConfig params = project.extensions.findByName(ExtenName) as RegisterConfig
-            params.parseParams()
-//            println params.toString()
+            def android = project.extensions.getByType(AppExtension)
+            RegisterTransForm registerTransForm = new RegisterTransForm()
+            android.registerTransform(registerTransForm)
+
+            project.afterEvaluate {
+                RegisterConfig params = project.extensions.findByName(ExtenName) as RegisterConfig
+                params.parseParams()
+                println params.toString()
+            }
         }
-
-
-
-
 
     }
 
