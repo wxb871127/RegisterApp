@@ -15,7 +15,10 @@ public class RegisterConfig{
             map ->
                 RegisterInfo registerInfo = new RegisterInfo()
                 registerInfo.scanAnnotationClass = map.get('scanAnnotationClass')
+                registerInfo.registerIntoClass = map.get('registerIntoClass')
                 registerInfo.registerMethod = map.get('registerMethod')
+                registerInfo.extendClass = map.get('extendClass')
+                registerInfo.init()
                 registerInfoList.add(registerInfo)
         }
     }

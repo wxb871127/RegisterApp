@@ -24,6 +24,7 @@ public  class RegisterPlugin implements Plugin<Project>{
                 RegisterConfig params = project.extensions.findByName(ExtenName) as RegisterConfig
                 params.parseParams()
                 println params.toString()
+                registerTransForm.registerConfig = params
             }
         }
 

@@ -42,12 +42,16 @@ apply plugin: 'register-plugin'
 registerplugin{
     registerInfo = [
             [
-                    'scanAnnotationClass':'Template',
-                    'registerMethod':'registerTemplate'
+                    'scanAnnotationClass':'register.com.registerapp.Template',
+                    'registerIntoClass':'register.com.registerapp.TemplateManager',
+                    'registerMethod':'registerTemplate',
+                    'extendClass':'register.com.registerapp.BaseTemplate'
             ],
             [
                     'scanAnnotationClass':'State',
-                    'registerMethod':'registerState'
+                    'registerIntoClass':'register.com.registerapp.TemplateManager',
+                    'registerMethod':'registerState',
+                    'extendClass':'register.com.registerapp.BaseState'
             ]
     ]
     enabledCache = false
