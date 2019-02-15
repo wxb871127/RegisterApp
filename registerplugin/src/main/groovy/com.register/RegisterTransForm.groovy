@@ -20,7 +20,11 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
 import org.gradle.api.file.Directory
+import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
+
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 public class RegisterTransForm extends Transform{
 
@@ -54,55 +58,38 @@ public class RegisterTransForm extends Transform{
                    TransformOutputProvider outputProvider,
                    boolean isIncremental) throws IOException, TransformException, InterruptedException {
 
-        inputs.each {//分别扫描出 build文件夹下的debug和release文件
-            TransformInput transformInput ->
 
+        def root
+
+        inputs.each {
+                //分别扫描出 build文件夹下的debug和release文件
+            TransformInput transformInput ->
                 // 遍历jar  拷贝编译的源jar包到目标路径
                 transformInput.jarInputs.each { JarInput jarInput ->
                     scanJar(jarInput, outputProvider)
-                }
+            }
 
-                //遍历文件夹
-                transformInput.directoryInputs.each {
-                    DirectoryInput directory ->
-                        File dest = outputProvider.getContentLocation(directory.name,
-                                directory.contentTypes, directory.scopes, Format.DIRECTORY)
-                        String root = directory.file.absolutePath
-                        if (!root.endsWith(File.separator))
-                            root += File.separator
+            //遍历文件夹
+            transformInput.directoryInputs.each {
+                DirectoryInput directory ->
+                    File dest = outputProvider.getContentLocation(directory.name,
+                            directory.contentTypes, directory.scopes, Format.DIRECTORY)
+                    root = directory.file.absolutePath
+                    if (!root.endsWith(File.separator))
+                        root += File.separator
 
-                        directory.file.eachFileRecurse {
-                            File file ->
-                                def path = file.absolutePath.replace(root, '')
-                                def entryName = path
-                                if(file.isFile()){
-                                    entryName = entryName.replaceAll("\\\\", "/")
-                                    if(scanFile(entryName, dest)){//找到需要注册到的类
-                                        visitClass(file)
-                                    }
-                                }
-                        }
-                }
-        }
-    }
-
-    boolean scanFile(String entryName, File destFile){
-        if (entryName == null || !entryName.endsWith(".class"))
-            return
-        entryName = entryName.substring(0, entryName.lastIndexOf('.'))
-
-        def found = false
-        registerConfig.registerInfoList.each { ext ->
-            if (ext.registerIntoClass == entryName) {
-                println '===========find class ' + entryName
-                ext.registerFile = destFile
-                if (destFile.name.endsWith(".jar")) {
-                    found = true
-                    println '===========find jar initClassName = '+ext.initClassName
-                }
+                    directory.file.eachFileRecurse {
+                        File file ->
+                            def fileName = file.absolutePath.replace(root, '')
+                            fileName = fileName.replaceAll("\\\\", "/")
+                            if (file.isFile()) {
+                                findNeedRegisterClass(fileName, file)
+                            }
+                    }
+                    FileUtils.copyDirectory(directory.file, dest)
             }
         }
-        return found
+        registerClass(root)
     }
 
     void scanJar(JarInput jarInput, TransformOutputProvider outputProvider) {
@@ -126,22 +113,114 @@ public class RegisterTransForm extends Transform{
         return dest
     }
 
-    void visitClass(File file){
-        visitClass(new FileInputStream(file), file.absolutePath)
+    boolean is(int access, int flag) {
+        return (access & flag) == flag
     }
 
-    /**
-     * ASM5 修改class文件
-     * @param inputStream
-     * @param filePath
-     */
-    void visitClass(InputStream inputStream, String filePath){
-        ClassReader cr = new ClassReader(inputStream)
-        ClassWriter cw = new ClassWriter(cr, 0)
-        ScanClassVisitor cv = new ScanClassVisitor(Opcodes.ASM5, cw, filePath)
-        cr.accept(cv, ClassReader.EXPAND_FRAMES)
-        inputStream.close()
+    void findNeedRegisterClass(String fileName, File file){
+        if (fileName == null || !fileName.endsWith(".class"))
+            return
+        fileName = fileName.substring(0, fileName.lastIndexOf('.'))
+        Pattern pattern = Pattern.compile('.*/R(\\$[^/]*)?')
+        Matcher matcher1 = pattern.matcher(fileName)
+        pattern = Pattern.compile('.*/BuildConfig$')
+        Matcher matcher2 = pattern.matcher(fileName)
 
-        return cv.isFound
+        if(matcher1.matches() || matcher2.matches()){
+            return
+        }
+
+        InputStream inputStream = file.newInputStream()
+        ClassReader classReader = new ClassReader(inputStream)
+        ClassWriter classWriter = new ClassWriter(classReader, 0)
+        ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM6, classWriter) {
+            @Override
+            void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                super.visit(version, access, name, signature, superName, interfaces)
+                //抽象类、接口、非public等类无法调用其无参构造方法
+                if (is(access, Opcodes.ACC_ABSTRACT)
+                        || is(access, Opcodes.ACC_INTERFACE)
+                        || !is(access, Opcodes.ACC_PUBLIC)
+                ) {
+                    return
+                }
+                if(superName != 'java/lang/Object'){
+                    registerConfig.registerInfoList.each {
+                        RegisterInfo registerInfo ->
+                            if(registerInfo.superClass == superName) {
+                                registerInfo.needRegisterClass.add(file.absolutePath)
+//                                println '========needRegisterClass ' + file.absolutePath
+                            }
+                    }
+                }
+            }
+        }
+        classReader.accept(classVisitor, ClassReader.EXPAND_FRAMES)
+        inputStream.close()
+    }
+
+    void registerClass(String root){
+        registerConfig.registerInfoList.each {
+            RegisterInfo registerInfo ->
+                registerInfo.registerIntoClass = registerInfo.registerIntoClass.replaceAll('/', '\\\\')
+                registerInfo.registerIntoClass = root + registerInfo.registerIntoClass + ".class"
+                registerInfo.needRegisterClass.each {
+                    String needRegisterClass ->
+                        println 'needRegisterClass = ' + needRegisterClass
+                        visitorClass(registerInfo.superClass, registerInfo.registerIntoClass,
+                                registerInfo.registerMethod, needRegisterClass)
+                }
+        }
+    }
+
+    void visitorClass(String superClass, String registerIntoClass, String registerMethod, String needRegisterClass){
+        println '============= registerInfo.registerIntoClass = ' + registerIntoClass
+        File file2 = new File(registerIntoClass)
+        InputStream inputStream = file2.newInputStream()
+        ClassReader classReader = new ClassReader(inputStream)
+        ClassWriter classWriter = new ClassWriter(classReader, 0)
+        ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM6, classWriter) {
+            @Override
+            MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+                MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
+                if(name == registerMethod){
+                    println 'find registerMethod = ' + name
+                    methodVisitor = new MethodVisitor(Opcodes.ASM6, methodVisitor){
+                        @Override
+                        void visitInsn(int opcode) {
+                            if ((opcode >= Opcodes.IRETURN && opcode <= Opcodes.RETURN)) {
+                                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0)//非static方法，加载this指针
+                                methodVisitor.visitTypeInsn(Opcodes.NEW, needRegisterClass)
+                                methodVisitor.visitInsn(Opcodes.DUP)
+                                methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, needRegisterClass, '<init>', '()V', false)
+                                methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,registerIntoClass,
+                                        registerMethod, "(L${superClass};)V" , false)
+                            }
+                            super.visitInsn(opcode)
+                        }
+
+                        @Override
+                        void visitMaxs(int maxStack, int maxLocals) {
+                            super.visitMaxs(maxStack + 4, maxLocals)
+                        }
+                    };
+                }
+                return methodVisitor
+            }
+        }
+        classReader.accept(classVisitor, 0)
+        byte[] bytes = classWriter.toByteArray()
+        String tmp = registerIntoClass + ".test.class"
+
+        println 'tmp = '+ tmp
+
+//        File file1 = new File(tmp)
+//        if(!file1.exists())
+//            file1.createNewFile()
+//        FileOutputStream fileOutputStream = new FileOutputStream(file1)
+//        fileOutputStream.write(bytes)
+//        fileOutputStream.flush()
+        inputStream.close()
+        fileOutputStream.close()
     }
 }

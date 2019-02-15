@@ -45,13 +45,13 @@ registerplugin{
                     'scanAnnotationClass':'register.com.registerapp.Template',
                     'registerIntoClass':'register.com.registerapp.TemplateManager',
                     'registerMethod':'registerTemplate',
-                    'extendClass':'register.com.registerapp.BaseTemplate'
+                    'superClass':'register.com.registerapp.BaseTemplate'
             ],
             [
                     'scanAnnotationClass':'State',
                     'registerIntoClass':'register.com.registerapp.TemplateManager',
                     'registerMethod':'registerState',
-                    'extendClass':'register.com.registerapp.BaseState'
+                    'superClass':'register.com.registerapp.BaseState'
             ]
     ]
     enabledCache = false
