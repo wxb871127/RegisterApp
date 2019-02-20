@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
-  <info organisation="com.register" module="registerplugin" revision="1.0.0" status="integration" publication="20190201134104"/>
+  <info organisation="com.register" module="registerplugin" revision="1.0.0" status="integration" default="true" publication="20190220180025"/>
   <configurations>
-    <conf name="annotationProcessor" visibility="private"/>
     <conf name="apiElements" visibility="private" extends="runtime"/>
     <conf name="archives" visibility="public"/>
     <conf name="compile" visibility="private"/>
@@ -14,7 +13,6 @@
     <conf name="runtimeClasspath" visibility="private" extends="implementation,runtime,runtimeOnly"/>
     <conf name="runtimeElements" visibility="private" extends="implementation,runtime,runtimeOnly"/>
     <conf name="runtimeOnly" visibility="private"/>
-    <conf name="testAnnotationProcessor" visibility="private"/>
     <conf name="testCompile" visibility="private" extends="compile"/>
     <conf name="testCompileClasspath" visibility="private" extends="testCompileOnly,testImplementation"/>
     <conf name="testCompileOnly" visibility="private"/>
@@ -25,9 +23,8 @@
   </configurations>
   <publications>
     <artifact name="registerplugin" type="jar" ext="jar" conf="apiElements,archives,runtime,runtimeElements"/>
-    <artifact name="registerplugin" type="jar" ext="jar" conf="archives" m:classifier="sources"/>
   </publications>
   <dependencies>
-    <dependency org="com.android.tools.build" name="gradle" rev="3.2.0" conf="compile-&gt;default"/>
+    <dependency org="com.android.tools.build" name="gradle" rev="3.0.1" conf="implementation-&gt;default"/>
   </dependencies>
 </ivy-module>

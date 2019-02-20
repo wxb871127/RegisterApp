@@ -1,5 +1,8 @@
 package register.com.registerapp;
 
 public class TestAnno extends BaseTemplate{
-    String name = "TestAnno";
+    @Override
+    protected String getName() {
+        return "TestAnno";
+    }
 }

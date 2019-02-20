@@ -1,6 +1,7 @@
 package com.register
 
 import com.android.build.gradle.AppExtension
+import com.android.build.gradle.BaseExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import com.android.build.gradle.AppPlugin
@@ -17,6 +18,7 @@ public  class RegisterPlugin implements Plugin<Project>{
         if(isApp) {
             project.extensions.create(ExtenName, RegisterConfig)
             def android = project.extensions.getByType(AppExtension)
+//            def android = project.extensions.getByType(BaseExtension.class)
             RegisterTransForm registerTransForm = new RegisterTransForm()
             android.registerTransform(registerTransForm)
 

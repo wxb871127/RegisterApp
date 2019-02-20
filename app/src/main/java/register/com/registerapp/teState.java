@@ -1,5 +1,8 @@
 package register.com.registerapp;
 
 public class teState extends BaseState{
-    String name = "teState";
+    @Override
+    protected String getName() {
+        return "teState";
+    }
 }
