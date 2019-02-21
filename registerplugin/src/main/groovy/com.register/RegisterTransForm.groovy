@@ -75,6 +75,8 @@ public class RegisterTransForm extends Transform{
                             fileName = fileName.replaceAll("\\\\", "/")
                             if (file.isFile()) {
                                 registerScan.filterClass(file, root)
+
+                                registerScan.filterRegisterIntoClass(new File(dest.absolutePath + File.separator + fileName), fileName)
                             }
                     }
                     FileUtils.copyDirectory(directory.file, dest)

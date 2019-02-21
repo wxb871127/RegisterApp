@@ -53,10 +53,25 @@ public class RegisterScan {
         return found
     }
 
-    //过滤文件来筛选符合条件的文件
+    //过滤目标文件来筛选符合条件的文件 registerIntoFile
+    void filterRegisterIntoClass(File file, String entryName){
+        if(entryName == null || !entryName.endsWith('.class'))
+            return
+
+        entryName = entryName.substring(0, entryName.lastIndexOf('.'))
+        registerConfig.registerInfoList.each {
+            RegisterInfo registerInfo ->
+                if(registerInfo.registerIntoClass == entryName){
+                    registerInfo.registerInfoFile = file
+                    println '=========find registerIntoClass = ' + file.absolutePath
+                }
+        }
+
+    }
+
+    //过滤源文件来筛选符合条件的文件needRegisterClass
     boolean filterClass(File file, String rootPath){
         def fileName = file.absolutePath.replace(rootPath, '')
-
         if (fileName == null || !fileName.endsWith(".class"))
             return false
         fileName = fileName.substring(0, fileName.lastIndexOf('.'))
@@ -72,7 +87,7 @@ public class RegisterScan {
         }
 
         RegisterClassVisitor classVisitor = new RegisterClassVisitor(registerConfig)
-        classVisitor.scanClass(file)
+        classVisitor.scanNeedRegisterClass(file)
     }
 
 }

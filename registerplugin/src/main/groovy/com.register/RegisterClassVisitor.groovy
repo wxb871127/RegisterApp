@@ -18,7 +18,7 @@ public class RegisterClassVisitor {
     }
 
     //过滤符合条件的class文件并记录到registerInfo
-    void scanClass(File file){
+    void scanNeedRegisterClass(File file){
         InputStream inputStream = file.newInputStream()
         ClassReader classReader = new ClassReader(inputStream)
         ClassWriter classWriter = new ClassWriter(classReader, 0)
@@ -41,10 +41,6 @@ public class RegisterClassVisitor {
 //                                println 'find class ' + file.absolutePath
                                 registerInfo.needRegisterClass.add(name)
                             }
-                        }
-                        if(name == registerInfo.registerIntoClass) {
-                            registerInfo.registerInfoFile = file
-//                            println 'find registerInfoFile = ' + file.absolutePath
                         }
                 }
 
