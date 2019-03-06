@@ -53,8 +53,6 @@ public class RegisterTransForm extends Transform{
             input.jarInputs.each { JarInput jarInput ->
                 File src = jarInput.file
                 File dest = getDestFile(jarInput, outputProvider)
-//                println 'xxxxxxxxxx src jar = ' + src.absolutePath
-//                println 'xxxxxxxxxx dest jar = ' + dest.absolutePath
                 FileUtils.copyFile(src, dest)
             }
 
@@ -64,11 +62,8 @@ public class RegisterTransForm extends Transform{
                     File dest = outputProvider.getContentLocation(directory.name,
                             directory.contentTypes, directory.scopes, Format.DIRECTORY)
                     def root = directory.file.absolutePath
-                    println 'xxxxxxxx dest directory = ' + dest
-                    println 'xxxxxxxx src directory =  ' + root
                     if (!root.endsWith(File.separator))
                         root += File.separator
-
                     directory.file.eachFileRecurse {
                         File file ->
                             def fileName = file.absolutePath.replace(root, '')

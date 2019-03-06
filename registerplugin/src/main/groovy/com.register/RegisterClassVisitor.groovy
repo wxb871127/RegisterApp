@@ -84,9 +84,13 @@ public class RegisterClassVisitor {
 
                                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);//非静态方法加载this指针
 
-                                methodVisitor.visitTypeInsn(Opcodes.NEW, needRegisterClass);
-                                //new指令 创建对象
-                                methodVisitor.visitInsn(Opcodes.DUP);//复制栈顶指针的值
+                                methodVisitor.visitTypeInsn(Opcodes.NEW, needRegisterClass);//new指令 创建对象
+
+                                //复制栈顶指针的值，这样栈顶存放了2个对象指针 第一个提供虚拟机自己调用init构造方法使用
+                                //第二个提供一下访问方法使用，针对这个对象指针使用一次就出栈消耗掉了
+                                // 这个也是jvm虚拟机的机制（new 操作后就会生成dup指令）
+                                methodVisitor.visitInsn(Opcodes.DUP);
+
                                 methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, needRegisterClass,//调用构造方法
                                         "<init>", "()V", false);
 
